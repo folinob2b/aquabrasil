@@ -3,13 +3,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  Waves, Menu, X, BookOpen, Shuffle, CalendarDays, MessageSquare, Home, GraduationCap, Leaf, LogOut, User,
+  Waves, Menu, X, BookOpen, Shuffle, CalendarDays, MessageSquare, GraduationCap, Leaf, LogOut, User,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "./AuthModal";
 
 const links = [
-  { href: "/",                label: "Início",               icon: Home },
   { href: "/catalogo",        label: "Catálogo",             icon: BookOpen },
   { href: "/compatibilidade", label: "Compatibilidade",      icon: Shuffle },
   { href: "/calendario",      label: "Diário do Aquário",    icon: CalendarDays },
