@@ -1,20 +1,22 @@
 "use client";
+import React from "react";
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  Waves, Menu, X, BookOpen, Shuffle, CalendarDays, MessageSquare, GraduationCap, Leaf, LogOut, User,
+  Waves, Menu, X, BookOpen, Shuffle, CalendarDays, MessageSquare, GraduationCap, Leaf, LogOut, User, Globe2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "./AuthModal";
 
-const links = [
+const links: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; wip?: boolean }[] = [
   { href: "/catalogo",        label: "Catálogo",             icon: BookOpen },
   { href: "/compatibilidade", label: "Compatibilidade",      icon: Shuffle },
   { href: "/calendario",      label: "Diário do Aquário",    icon: CalendarDays },
-  { href: "/aquascape",       label: "Aquascape",            icon: Leaf },
+  { href: "/origens",         label: "Origens",              icon: Globe2 },
   { href: "/educacao",        label: "Educação",             icon: GraduationCap },
-  { href: "/forum",           label: "Fórum",                icon: MessageSquare },
+  { href: "/aquascape",       label: "Aquascape",            icon: Leaf,          wip: true },
+  { href: "/forum",           label: "Fórum",                icon: MessageSquare, wip: true },
 ];
 
 type ModalMode = "login" | "cadastro" | null;
@@ -79,7 +81,7 @@ export default function Navbar() {
 
         {/* Nav links */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
-          {links.map(({ href, label, icon: Icon }) => {
+          {links.map(({ href, label, icon: Icon, wip }) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
               <Link
@@ -94,6 +96,7 @@ export default function Navbar() {
               >
                 <Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-cyan-400" : ""}`} />
                 {label}
+                {wip && <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/25">WIP</span>}
               </Link>
             );
           })}

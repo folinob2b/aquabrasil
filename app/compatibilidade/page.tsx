@@ -339,43 +339,8 @@ export default function CompatibilidadePage() {
       </section>
 
       <section className="px-6 sm:px-8 py-12">
-        <SeletorPeixes selecionados={selecionados} onAdd={addPeixe} onRemove={removerPeixe} analise={analise} />
 
-        {/* ── Salvar grupo (usuário logado) ── */}
-        {user && selecionados.length >= 2 && (
-          <div className="mb-6">
-            {!salvandoGrupo ? (
-              <div className="flex items-center gap-3">
-                <button onClick={() => setSalvandoGrupo(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-cyan-500/25 bg-cyan-500/8 text-cyan-400 text-sm font-semibold hover:bg-cyan-500/15 transition-all">
-                  <BookmarkPlus className="w-4 h-4" /> Salvar grupo
-                </button>
-                {feedbackSalvo && <span className="text-xs text-emerald-400 font-medium">{feedbackSalvo}</span>}
-              </div>
-            ) : (
-              <div className="glass rounded-2xl p-4 border border-cyan-500/20 flex flex-wrap items-center gap-3">
-                <input autoFocus type="text" placeholder="Nome do grupo (opcional)"
-                  value={nomeGrupo} onChange={e => setNomeGrupo(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && salvarGrupo()}
-                  className="input-ocean text-sm flex-1 min-w-[180px]"
-                />
-                <button onClick={salvarGrupo}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/25 text-cyan-300 text-sm font-semibold hover:bg-cyan-500/25 transition-all">
-                  <Save className="w-3.5 h-3.5" /> Salvar grupo
-                </button>
-                <button onClick={salvarComoAquario}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/15 border border-violet-500/25 text-violet-300 text-sm font-semibold hover:bg-violet-500/25 transition-all">
-                  <Plus className="w-3.5 h-3.5" /> Salvar como aquário
-                </button>
-                <button onClick={() => { setSalvandoGrupo(false); setNomeGrupo(""); }} className="p-2 text-slate-500 hover:text-slate-300">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Grupos salvos ── */}
+        {/* ── Grupos salvos (acima de tudo) ── */}
         {user && gruposSalvos.length > 0 && (
           <div className="mb-6 glass rounded-2xl border border-white/8 overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5">
@@ -410,6 +375,42 @@ export default function CompatibilidadePage() {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        <SeletorPeixes selecionados={selecionados} onAdd={addPeixe} onRemove={removerPeixe} analise={analise} />
+
+        {/* ── Salvar grupo (usuário logado) ── */}
+        {user && selecionados.length >= 2 && (
+          <div className="mb-6">
+            {!salvandoGrupo ? (
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSalvandoGrupo(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-cyan-500/25 bg-cyan-500/8 text-cyan-400 text-sm font-semibold hover:bg-cyan-500/15 transition-all">
+                  <BookmarkPlus className="w-4 h-4" /> Salvar grupo
+                </button>
+                {feedbackSalvo && <span className="text-xs text-emerald-400 font-medium">{feedbackSalvo}</span>}
+              </div>
+            ) : (
+              <div className="glass rounded-2xl p-4 border border-cyan-500/20 flex flex-wrap items-center gap-3">
+                <input autoFocus type="text" placeholder="Nome do grupo (opcional)"
+                  value={nomeGrupo} onChange={e => setNomeGrupo(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && salvarGrupo()}
+                  className="input-ocean text-sm flex-1 min-w-[180px]"
+                />
+                <button onClick={salvarGrupo}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/25 text-cyan-300 text-sm font-semibold hover:bg-cyan-500/25 transition-all">
+                  <Save className="w-3.5 h-3.5" /> Salvar grupo
+                </button>
+                <button onClick={salvarComoAquario}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/15 border border-violet-500/25 text-violet-300 text-sm font-semibold hover:bg-violet-500/25 transition-all">
+                  <Plus className="w-3.5 h-3.5" /> Salvar como aquário
+                </button>
+                <button onClick={() => { setSalvandoGrupo(false); setNomeGrupo(""); }} className="p-2 text-slate-500 hover:text-slate-300">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         )}
 
