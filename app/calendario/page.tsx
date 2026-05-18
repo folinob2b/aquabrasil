@@ -30,6 +30,8 @@ interface Aquario {
   params: ParamKey[];
   baseline: Baseline;
   peixes: AquarioPeixe[];
+  litragem?: number;
+  dataMontagem?: string;
   foto?: string;
 }
 
@@ -223,9 +225,11 @@ export default function DiarioPage() {
   const [aquarios, setAquarios]         = useState<Aquario[]>([]);
   const [medicoes, setMedicoes]         = useState<Medicao[]>([]);
   const [aquarioAtivo, setAquarioAtivo] = useState<string>("");
-  const [novoAqNome, setNovoAqNome]     = useState("");
-  const [novoAqTipo, setNovoAqTipo]     = useState<"doce" | "salgado">("doce");
-  const [criandoAq, setCriandoAq]       = useState(false);
+  const [novoAqNome, setNovoAqNome]         = useState("");
+  const [novoAqTipo, setNovoAqTipo]         = useState<"doce" | "salgado">("doce");
+  const [novoAqLitragem, setNovoAqLitragem] = useState("");
+  const [novoAqData, setNovoAqData]         = useState("");
+  const [criandoAq, setCriandoAq]           = useState(false);
   const [configurando, setConfigurando] = useState(false);
   const [abaConfig, setAbaConfig]       = useState<"params" | "baseline">("params");
   const [baselineEdit, setBaselineEdit] = useState<Partial<Record<ParamKey, { min: string; max: string }>>>({});
@@ -235,11 +239,14 @@ export default function DiarioPage() {
   const [dicasAberto, setDicasAberto]   = useState(false);
   const [graficoAberto, setGraficoAberto] = useState(false);
   const [editandoMedicaoId, setEditandoMedicaoId] = useState<string | null>(null);
-  const [renamingId, setRenamingId]     = useState<string | null>(null);
-  const [renameVal, setRenameVal]       = useState("");
-  const [renameTipo, setRenameTipo]     = useState<"doce" | "salgado">("doce");
+  const [renamingId, setRenamingId]         = useState<string | null>(null);
+  const [renameVal, setRenameVal]           = useState("");
+  const [renameTipo, setRenameTipo]         = useState<"doce" | "salgado">("doce");
+  const [renameLitragem, setRenameLitragem] = useState("");
+  const [renameData, setRenameData]         = useState("");
   const [adicionandoPeixe, setAdicionandoPeixe] = useState(false);
-  const [buscaPeixe, setBuscaPeixe]     = useState("");
+  const [buscaPeixe, setBuscaPeixe]         = useState("");
+  const [modoBuscaPeixe, setModoBuscaPeixe] = useState<"busca" | "catalogo">("busca");
 
   useEffect(() => {
     setMounted(true);
@@ -276,12 +283,15 @@ export default function DiarioPage() {
     const defaultParams: ParamKey[] = novoAqTipo === "salgado"
       ? ["temperatura", "ph", "amonia", "nitrito", "nitrato", "salinidade"]
       : [...PARAMS_PADRAO];
-    const novo: Aquario = { id: crypto.randomUUID(), nome, tipo: novoAqTipo, params: defaultParams, baseline: {}, peixes: [] };
+    const novo: Aquario = {
+      id: crypto.randomUUID(), nome, tipo: novoAqTipo, params: defaultParams, baseline: {}, peixes: [],
+      litragem: novoAqLitragem ? Number(novoAqLitragem) : undefined,
+      dataMontagem: novoAqData || undefined,
+    };
     const lista = [...aquarios, novo];
     saveAquarios(lista);
     setAquarioAtivo(novo.id);
-    setNovoAqNome("");
-    setNovoAqTipo("doce");
+    setNovoAqNome(""); setNovoAqTipo("doce"); setNovoAqLitragem(""); setNovoAqData("");
     setCriandoAq(false);
   }
 
@@ -376,7 +386,11 @@ export default function DiarioPage() {
   function renomearAquario(id: string) {
     const nome = renameVal.trim();
     if (!nome) return;
-    saveAquarios(aquarios.map(a => a.id === id ? { ...a, nome, tipo: renameTipo } : a));
+    saveAquarios(aquarios.map(a => a.id === id ? {
+      ...a, nome, tipo: renameTipo,
+      litragem: renameLitragem ? Number(renameLitragem) : undefined,
+      dataMontagem: renameData || undefined,
+    } : a));
     setRenamingId(null);
   }
 
@@ -486,22 +500,30 @@ export default function DiarioPage() {
               {aquarios.map(a => (
                 <div key={a.id} className="flex items-center gap-0.5">
                   {renamingId === a.id ? (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <input autoFocus type="text" value={renameVal}
+                    <div className="flex flex-wrap items-center gap-1.5 bg-white/3 border border-white/10 rounded-xl px-3 py-2">
+                      <input autoFocus type="text" value={renameVal} placeholder="Nome"
                         onChange={e => setRenameVal(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") renomearAquario(a.id); if (e.key === "Escape") setRenamingId(null); }}
-                        className="input-ocean py-1.5 text-sm w-40"
+                        className="input-ocean py-1 text-sm w-32"
+                      />
+                      <input type="number" value={renameLitragem} placeholder="Litros"
+                        onChange={e => setRenameLitragem(e.target.value)}
+                        className="input-ocean py-1 text-sm w-20"
+                      />
+                      <input type="date" value={renameData}
+                        onChange={e => setRenameData(e.target.value)}
+                        className="input-ocean py-1 text-sm w-32"
                       />
                       <button onClick={() => setRenameTipo("doce")}
-                        className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-all ${renameTipo === "doce" ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" : "text-slate-500 border-white/10 hover:text-slate-300"}`}>
-                        💧 Doce
+                        className={`px-2 py-1 rounded-lg text-xs font-medium border transition-all ${renameTipo === "doce" ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" : "text-slate-500 border-white/10 hover:text-slate-300"}`}>
+                        💧
                       </button>
                       <button onClick={() => setRenameTipo("salgado")}
-                        className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-all ${renameTipo === "salgado" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" : "text-slate-500 border-white/10 hover:text-slate-300"}`}>
-                        🌊 Salgado
+                        className={`px-2 py-1 rounded-lg text-xs font-medium border transition-all ${renameTipo === "salgado" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" : "text-slate-500 border-white/10 hover:text-slate-300"}`}>
+                        🌊
                       </button>
-                      <button onClick={() => renomearAquario(a.id)} className="px-2 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-semibold hover:bg-cyan-500/30 transition-all">OK</button>
-                      <button onClick={() => setRenamingId(null)} className="p-1.5 text-slate-500 hover:text-slate-300"><X className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => renomearAquario(a.id)} className="px-2 py-1 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-semibold hover:bg-cyan-500/30 transition-all">OK</button>
+                      <button onClick={() => setRenamingId(null)} className="p-1 text-slate-500 hover:text-slate-300"><X className="w-3.5 h-3.5" /></button>
                     </div>
                   ) : (
                     <>
@@ -512,7 +534,7 @@ export default function DiarioPage() {
                         {(a.tipo === "salgado" ? "🌊 " : "💧 ")}{a.nome}
                       </button>
                       {aquarioAtivo === a.id && (
-                        <button onClick={() => { setRenamingId(a.id); setRenameVal(a.nome); setRenameTipo(a.tipo ?? "doce"); }}
+                        <button onClick={() => { setRenamingId(a.id); setRenameVal(a.nome); setRenameTipo(a.tipo ?? "doce"); setRenameLitragem(a.litragem ? String(a.litragem) : ""); setRenameData(a.dataMontagem ?? ""); }}
                           className="p-1 text-slate-600 hover:text-slate-300 transition-colors" title="Renomear">
                           <Pencil className="w-3 h-3" />
                         </button>
@@ -540,6 +562,18 @@ export default function DiarioPage() {
                 className="input-ocean flex-1"
               />
               <button onClick={() => setCriandoAq(false)} className="p-2 text-slate-500 hover:text-slate-300"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pl-8">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Litragem (L)</label>
+                <input type="number" placeholder="ex: 80" value={novoAqLitragem}
+                  onChange={e => setNovoAqLitragem(e.target.value)} className="input-ocean w-full" />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Data de montagem</label>
+                <input type="date" value={novoAqData}
+                  onChange={e => setNovoAqData(e.target.value)} className="input-ocean w-full" />
+              </div>
             </div>
             <div className="flex items-center gap-2 pl-8">
               <span className="text-xs text-slate-500 font-medium mr-1">Tipo:</span>
@@ -595,15 +629,30 @@ export default function DiarioPage() {
                   )}
                 </div>
 
-                {/* Nome + contadores */}
+                {/* Nome + badges */}
                 <div className="flex-1 min-w-0">
                   <h2 className="text-white font-black text-2xl sm:text-3xl leading-tight truncate">{aq.nome}</h2>
+                  <div className="flex items-center gap-2 flex-wrap mt-2">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${aq.tipo === "salgado" ? "bg-blue-500/15 text-blue-300 border-blue-500/25" : "bg-cyan-500/15 text-cyan-300 border-cyan-500/25"}`}>
+                      {aq.tipo === "salgado" ? "🌊 Água Salgada" : "💧 Água Doce"}
+                    </span>
+                    {aq.litragem && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
+                        🪣 {aq.litragem} L
+                      </span>
+                    )}
+                    {aq.dataMontagem && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400">
+                        🗓️ Montado em {new Date(aq.dataMontagem + "T12:00:00").toLocaleDateString("pt-BR")}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 flex-wrap mt-1">
-                    <span className="text-slate-500 text-sm">{medAq.length} medição{medAq.length !== 1 ? "ões" : ""}</span>
+                    <span className="text-slate-600 text-xs">{medAq.length} medição{medAq.length !== 1 ? "ões" : ""}</span>
                     {ultima && (
                       <>
                         <span className="text-slate-700">·</span>
-                        <span className="text-slate-500 text-sm">
+                        <span className="text-slate-600 text-xs">
                           última em {new Date(ultima.data + "T12:00:00").toLocaleDateString("pt-BR")}
                         </span>
                       </>
@@ -677,64 +726,112 @@ export default function DiarioPage() {
                   </button>
                 </div>
 
-                {/* Busca de peixes */}
-                {adicionandoPeixe && (
-                  <div className="mb-3">
-                    <input
-                      autoFocus
-                      type="text"
-                      placeholder={`Buscar peixe de água ${aq.tipo === "salgado" ? "salgada" : "doce"}...`}
-                      value={buscaPeixe}
-                      onChange={e => setBuscaPeixe(e.target.value)}
-                      className="input-ocean text-sm w-full mb-2"
-                    />
-                    {buscaPeixe.trim().length >= 2 && (() => {
-                      const tipoFiltro = aq.tipo === "salgado" ? "agua-salgada" : "agua-doce";
-                      const resultados = catalogoPeixes
-                        .filter(p => p.tipo === tipoFiltro && p.nome.toLowerCase().includes(buscaPeixe.toLowerCase()))
-                        .slice(0, 8);
-                      return resultados.length > 0 ? (
-                        <div className="rounded-xl border border-white/8 overflow-hidden">
-                          {resultados.map((p, i) => (
-                            <button
-                              key={p.id}
-                              onClick={() => adicionarPeixeAoAquario(p.id, p.nome)}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5 transition-colors ${i > 0 ? "border-t border-white/5" : ""}`}
-                            >
-                              <span className="text-lg">{p.emoji}</span>
-                              <div>
-                                <p className="text-sm text-slate-200 font-medium">{p.nome}</p>
-                                <p className="text-xs text-slate-600 italic">{p.nomeCientifico}</p>
+                {/* Painel de busca/catálogo */}
+                {adicionandoPeixe && (() => {
+                  const tipoFiltro = aq.tipo === "salgado" ? "agua-salgada" : "agua-doce";
+                  const jaAdicionados = new Set((aq.peixes ?? []).map(p => p.id));
+                  const listaCatalogo = catalogoPeixes
+                    .filter(p => p.tipo === tipoFiltro)
+                    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+                  const resultadosBusca = buscaPeixe.trim().length >= 2
+                    ? listaCatalogo.filter(p => p.nome.toLowerCase().includes(buscaPeixe.toLowerCase())).slice(0, 8)
+                    : [];
+
+                  return (
+                    <div className="mb-3 rounded-xl border border-white/10 overflow-hidden">
+                      {/* Tabs busca/catálogo */}
+                      <div className="flex border-b border-white/8">
+                        <button onClick={() => setModoBuscaPeixe("busca")}
+                          className={`flex-1 py-2 text-xs font-semibold transition-all ${modoBuscaPeixe === "busca" ? "text-cyan-400 bg-cyan-500/8" : "text-slate-500 hover:text-slate-300"}`}>
+                          🔍 Buscar
+                        </button>
+                        <button onClick={() => setModoBuscaPeixe("catalogo")}
+                          className={`flex-1 py-2 text-xs font-semibold transition-all ${modoBuscaPeixe === "catalogo" ? "text-cyan-400 bg-cyan-500/8" : "text-slate-500 hover:text-slate-300"}`}>
+                          📋 Catálogo ({listaCatalogo.length})
+                        </button>
+                      </div>
+
+                      {modoBuscaPeixe === "busca" ? (
+                        <div className="p-2">
+                          <input autoFocus type="text"
+                            placeholder={`Buscar peixe de água ${aq.tipo === "salgado" ? "salgada" : "doce"}...`}
+                            value={buscaPeixe} onChange={e => setBuscaPeixe(e.target.value)}
+                            className="input-ocean text-sm w-full mb-2"
+                          />
+                          {buscaPeixe.trim().length < 2 ? (
+                            <p className="text-xs text-slate-600 px-1 py-1">Digite ao menos 2 letras para buscar.</p>
+                          ) : resultadosBusca.length === 0 ? (
+                            <p className="text-xs text-slate-600 px-1">Nenhum peixe encontrado.</p>
+                          ) : (
+                            resultadosBusca.map((p, i) => (
+                              <button key={p.id} onClick={() => adicionarPeixeAoAquario(p.id, p.nome)}
+                                className={`w-full flex items-center gap-3 px-2 py-2 text-left hover:bg-white/5 rounded-lg transition-colors ${i > 0 ? "border-t border-white/5" : ""}`}>
+                                {p.foto
+                                  ? <img src={p.foto} alt={p.nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                  : <span className="w-8 h-8 flex items-center justify-center text-xl flex-shrink-0">{p.emoji}</span>
+                                }
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-slate-200 font-medium truncate">{p.nome}</p>
+                                  <p className="text-xs text-slate-600 italic truncate">{p.nomeCientifico}</p>
+                                </div>
+                                {jaAdicionados.has(p.id)
+                                  ? <CheckCircle className="w-3.5 h-3.5 text-cyan-500 flex-shrink-0" />
+                                  : <Plus className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                                }
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      ) : (
+                        <div className="max-h-52 overflow-y-auto">
+                          {listaCatalogo.map((p, i) => (
+                            <button key={p.id} onClick={() => adicionarPeixeAoAquario(p.id, p.nome)}
+                              className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-white/5 transition-colors ${i > 0 ? "border-t border-white/5" : ""}`}>
+                              {p.foto
+                                ? <img src={p.foto} alt={p.nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                : <span className="w-8 h-8 flex items-center justify-center text-xl flex-shrink-0">{p.emoji}</span>
+                              }
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-slate-200 font-medium truncate">{p.nome}</p>
+                                <p className="text-xs text-slate-600 italic truncate">{p.nomeCientifico}</p>
                               </div>
-                              <Plus className="w-3.5 h-3.5 text-cyan-500 ml-auto flex-shrink-0" />
+                              {jaAdicionados.has(p.id)
+                                ? <CheckCircle className="w-3.5 h-3.5 text-cyan-500 flex-shrink-0" />
+                                : <Plus className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                              }
                             </button>
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-xs text-slate-600 px-1">Nenhum peixe encontrado.</p>
-                      );
-                    })()}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Lista de peixes */}
                 {(aq.peixes ?? []).length === 0 && !adicionandoPeixe ? (
                   <p className="text-slate-700 text-xs">Nenhum peixe adicionado ainda.</p>
                 ) : (
-                  <div className="flex flex-col gap-1">
-                    {(aq.peixes ?? []).map(p => (
-                      <div key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/3 transition-colors group">
-                        <span className="text-slate-300 text-sm flex-1 truncate">{p.nome}</span>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <button onClick={() => alterarQuantidadePeixe(p.id, -1)} className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">−</button>
-                          <span className="text-xs text-slate-300 font-medium w-5 text-center">{p.quantidade}</span>
-                          <button onClick={() => alterarQuantidadePeixe(p.id, +1)} className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">+</button>
+                  <div className="flex flex-col gap-0.5">
+                    {(aq.peixes ?? []).map(p => {
+                      const catalogoPeixe = catalogoPeixes.find(c => c.id === p.id);
+                      return (
+                        <div key={p.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/3 transition-colors group">
+                          {catalogoPeixe?.foto
+                            ? <img src={catalogoPeixe.foto} alt={p.nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                            : <span className="w-8 h-8 flex items-center justify-center text-lg flex-shrink-0">{catalogoPeixe?.emoji ?? "🐠"}</span>
+                          }
+                          <span className="text-slate-300 text-sm flex-1 truncate">{p.nome}</span>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button onClick={() => alterarQuantidadePeixe(p.id, -1)} className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">−</button>
+                            <span className="text-xs text-slate-300 font-medium w-5 text-center">{p.quantidade}</span>
+                            <button onClick={() => alterarQuantidadePeixe(p.id, +1)} className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">+</button>
+                          </div>
+                          <button onClick={() => removerPeixeDoAquario(p.id)} className="opacity-0 group-hover:opacity-100 p-1 text-slate-700 hover:text-rose-400 transition-all flex-shrink-0">
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
-                        <button onClick={() => removerPeixeDoAquario(p.id)} className="opacity-0 group-hover:opacity-100 p-1 text-slate-700 hover:text-rose-400 transition-all flex-shrink-0">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
