@@ -229,6 +229,7 @@ export default function DiarioPage() {
   const [editandoMedicaoId, setEditandoMedicaoId] = useState<string | null>(null);
   const [renamingId, setRenamingId]     = useState<string | null>(null);
   const [renameVal, setRenameVal]       = useState("");
+  const [renameTipo, setRenameTipo]     = useState<"doce" | "salgado">("doce");
 
   useEffect(() => {
     setMounted(true);
@@ -340,7 +341,7 @@ export default function DiarioPage() {
   function renomearAquario(id: string) {
     const nome = renameVal.trim();
     if (!nome) return;
-    saveAquarios(aquarios.map(a => a.id === id ? { ...a, nome } : a));
+    saveAquarios(aquarios.map(a => a.id === id ? { ...a, nome, tipo: renameTipo } : a));
     setRenamingId(null);
   }
 
@@ -450,12 +451,20 @@ export default function DiarioPage() {
               {aquarios.map(a => (
                 <div key={a.id} className="flex items-center gap-0.5">
                   {renamingId === a.id ? (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <input autoFocus type="text" value={renameVal}
                         onChange={e => setRenameVal(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") renomearAquario(a.id); if (e.key === "Escape") setRenamingId(null); }}
                         className="input-ocean py-1.5 text-sm w-40"
                       />
+                      <button onClick={() => setRenameTipo("doce")}
+                        className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-all ${renameTipo === "doce" ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" : "text-slate-500 border-white/10 hover:text-slate-300"}`}>
+                        💧 Doce
+                      </button>
+                      <button onClick={() => setRenameTipo("salgado")}
+                        className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-all ${renameTipo === "salgado" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" : "text-slate-500 border-white/10 hover:text-slate-300"}`}>
+                        🌊 Salgado
+                      </button>
                       <button onClick={() => renomearAquario(a.id)} className="px-2 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-semibold hover:bg-cyan-500/30 transition-all">OK</button>
                       <button onClick={() => setRenamingId(null)} className="p-1.5 text-slate-500 hover:text-slate-300"><X className="w-3.5 h-3.5" /></button>
                     </div>
@@ -468,7 +477,7 @@ export default function DiarioPage() {
                         {(a.tipo === "salgado" ? "🌊 " : "💧 ")}{a.nome}
                       </button>
                       {aquarioAtivo === a.id && (
-                        <button onClick={() => { setRenamingId(a.id); setRenameVal(a.nome); }}
+                        <button onClick={() => { setRenamingId(a.id); setRenameVal(a.nome); setRenameTipo(a.tipo ?? "doce"); }}
                           className="p-1 text-slate-600 hover:text-slate-300 transition-colors" title="Renomear">
                           <Pencil className="w-3 h-3" />
                         </button>
