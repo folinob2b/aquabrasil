@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ocean-950: #020d1a;
+  --ocean-900: #041525;
+  --cyan-glow: rgba(0, 229, 255, 0.15);
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--ocean-950);
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #020d1a; }
+::-webkit-scrollbar-thumb { background: #0e4266; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #00bcd4; }
+
+/* Bubble elements */
+.bubble {
+  position: absolute;
+  bottom: -20px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(130, 230, 255, 0.5),
+    rgba(50, 160, 220, 0.15)
+  );
+  border: 1px solid rgba(130, 230, 255, 0.25);
+  animation: bubble linear infinite;
+}
+
+/* Glass card */
+.glass {
+  background: rgba(4, 21, 37, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 188, 212, 0.12);
+}
+
+.glass-hover:hover {
+  background: rgba(6, 32, 53, 0.7);
+  border-color: rgba(0, 188, 212, 0.25);
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #00e5ff, #4fc3f7, #00bcd4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effects */
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.2), 0 0 40px rgba(0, 229, 255, 0.08);
+}
+
+.glow-cyan:hover {
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.35), 0 0 60px rgba(0, 229, 255, 0.12);
+}
+
+/* Underwater grid */
+.underwater-grid {
+  background-image:
+    linear-gradient(rgba(0, 188, 212, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 188, 212, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Fish card gradient variants */
+.fish-card-doce {
+  background: linear-gradient(135deg, rgba(6, 32, 80, 0.6), rgba(4, 21, 50, 0.8));
+}
+.fish-card-salgada {
+  background: linear-gradient(135deg, rgba(6, 50, 60, 0.6), rgba(4, 30, 50, 0.8));
+}
+.fish-card-fria {
+  background: linear-gradient(135deg, rgba(30, 30, 80, 0.6), rgba(20, 20, 60, 0.8));
+}
+
+/* Badge pill */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+/* Difficulty colors */
+.diff-facil    { @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/25; }
+.diff-moderado { @apply bg-amber-500/15 text-amber-400 border border-amber-500/25; }
+.diff-dificil  { @apply bg-rose-500/15 text-rose-400 border border-rose-500/25; }
+
+/* Type colors */
+.tipo-doce     { @apply bg-blue-500/15 text-blue-300 border border-blue-500/25; }
+.tipo-salgada  { @apply bg-teal-500/15 text-teal-300 border border-teal-500/25; }
+.tipo-fria     { @apply bg-indigo-500/15 text-indigo-300 border border-indigo-500/25; }
+
+/* Compatible / incompatible */
+.compat-ok  { @apply bg-emerald-500/10 border border-emerald-500/30 text-emerald-300; }
+.compat-bad { @apply bg-rose-500/10 border border-rose-500/30 text-rose-300; }
+.compat-warn { @apply bg-amber-500/10 border border-amber-500/30 text-amber-300; }
+
+/* Input style */
+.input-ocean {
+  @apply bg-ocean-900 border border-cyan-900/40 rounded-xl px-4 py-2.5 text-slate-200
+    placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1
+    focus:ring-cyan-500/30 transition-all w-full;
+}
+/* Variante com padding-left customizado para inputs com ícone à esquerda */
+.input-ocean-icon {
+  @apply bg-ocean-900 border border-cyan-900/40 rounded-xl pr-4 py-2.5 text-slate-200
+    placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1
+    focus:ring-cyan-500/30 transition-all w-full;
+  padding-left: 2.75rem;
+}
+
+/* Section title */
+.section-title {
+  @apply text-3xl sm:text-4xl font-black text-white;
+}
+
+.section-sub {
+  @apply text-slate-400 text-lg mt-2;
+}

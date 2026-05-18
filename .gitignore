@@ -1,0 +1,26 @@
+# Dependências (instaladas automaticamente, não precisam ir ao servidor)
+node_modules/
+.npm
+
+# Build gerado pelo Next.js (o servidor gera o próprio)
+.next/
+out/
+
+# Arquivos de ambiente com senhas/chaves (NUNCA enviar ao GitHub)
+.env
+.env.local
+.env.production
+.env*.local
+
+# Arquivos temporários e de sistema
+*.log
+fish_files.json
+.DS_Store
+Thumbs.db
+
+# TypeScript cache
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Vercel
+.vercel

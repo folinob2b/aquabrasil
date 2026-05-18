@@ -1,0 +1,107 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
+import {
+  Waves, Menu, X, BookOpen, Shuffle, CalendarDays, MessageSquare, Home, GraduationCap, Leaf,
+} from "lucide-react";
+
+const links = [
+  { href: "/",                label: "Início",               icon: Home },
+  { href: "/catalogo",        label: "Catálogo",             icon: BookOpen },
+  { href: "/compatibilidade", label: "Compatibilidade",      icon: Shuffle },
+  { href: "/calendario",      label: "Diário de Parâmetros", icon: CalendarDays },
+  { href: "/aquascape",       label: "Aquascape",            icon: Leaf },
+  { href: "/educacao",        label: "Educação",             icon: GraduationCap },
+  { href: "/forum",           label: "Fórum",                icon: MessageSquare },
+];
+
+export default function Navbar() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  return (
+    <>
+      {/* ── Mobile top bar ─────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 inset-x-0 z-50 h-14 bg-ocean-950/90 backdrop-blur-xl border-b border-cyan-900/20 flex items-center justify-between px-4">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+            <Waves className="w-3.5 h-3.5 text-white" />
+          </div>
+          <span className="text-base font-black tracking-tight">
+            <span className="text-gradient">Aqua</span><span className="text-white">Brasil</span>
+          </span>
+        </Link>
+        <button
+          onClick={() => setOpen(!open)}
+          className="p-2 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-white/5 transition-all"
+        >
+          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* ── Mobile overlay ─────────────────────────────────── */}
+      {open && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar ────────────────────────────────────────── */}
+      <aside
+        className={`fixed top-0 left-0 h-full z-50 w-56 bg-ocean-950 border-r border-cyan-900/20 flex flex-col transition-transform duration-300
+          ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+      >
+        {/* Logo */}
+        <div className="px-5 py-5 border-b border-cyan-900/15">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 group"
+            onClick={() => setOpen(false)}
+          >
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Waves className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-black tracking-tight">
+              <span className="text-gradient">Aqua</span>
+              <span className="text-white">Brasil</span>
+            </span>
+          </Link>
+        </div>
+
+        {/* Nav links */}
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
+          {links.map(({ href, label, icon: Icon }) => {
+            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  active
+                    ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/20"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                }`}
+              >
+                <Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-cyan-400" : ""}`} />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Auth */}
+        <div className="px-3 pb-5 pt-4 border-t border-cyan-900/15 flex flex-col gap-2">
+          <button className="w-full py-2 rounded-xl text-sm font-medium text-slate-300 border border-slate-700/60 hover:border-slate-500 hover:text-white transition-all">
+            Entrar
+          </button>
+          <button className="w-full py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 transition-all glow-cyan">
+            Cadastrar
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+}
