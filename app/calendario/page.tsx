@@ -19,9 +19,10 @@ type Baseline = Partial<Record<ParamKey, { min: number; max: number }>>;
 interface Aquario {
   id: string;
   nome: string;
+  tipo: "doce" | "salgado";
   params: ParamKey[];
   baseline: Baseline;
-  foto?: string; // base64 data URL
+  foto?: string;
 }
 
 interface Medicao {
@@ -215,6 +216,7 @@ export default function DiarioPage() {
   const [medicoes, setMedicoes]         = useState<Medicao[]>([]);
   const [aquarioAtivo, setAquarioAtivo] = useState<string>("");
   const [novoAqNome, setNovoAqNome]     = useState("");
+  const [novoAqTipo, setNovoAqTipo]     = useState<"doce" | "salgado">("doce");
   const [criandoAq, setCriandoAq]       = useState(false);
   const [configurando, setConfigurando] = useState(false);
   const [abaConfig, setAbaConfig]       = useState<"params" | "baseline">("params");
@@ -260,11 +262,15 @@ export default function DiarioPage() {
   function criarAquario() {
     const nome = novoAqNome.trim();
     if (!nome) return;
-    const novo: Aquario = { id: crypto.randomUUID(), nome, params: [...PARAMS_PADRAO], baseline: {} };
+    const defaultParams: ParamKey[] = novoAqTipo === "salgado"
+      ? ["temperatura", "ph", "amonia", "nitrito", "nitrato", "salinidade"]
+      : [...PARAMS_PADRAO];
+    const novo: Aquario = { id: crypto.randomUUID(), nome, tipo: novoAqTipo, params: defaultParams, baseline: {} };
     const lista = [...aquarios, novo];
     saveAquarios(lista);
     setAquarioAtivo(novo.id);
     setNovoAqNome("");
+    setNovoAqTipo("doce");
     setCriandoAq(false);
   }
 
@@ -459,7 +465,7 @@ export default function DiarioPage() {
                         onClick={() => { setAquarioAtivo(a.id); setAdicionando(false); setForm(null); setConfigurando(false); setGraficoAberto(false); }}
                         className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${aquarioAtivo === a.id ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" : "text-slate-400 hover:text-slate-200 border border-white/8 hover:border-white/15"}`}
                       >
-                        {a.nome}
+                        {(a.tipo === "salgado" ? "🌊 " : "💧 ")}{a.nome}
                       </button>
                       {aquarioAtivo === a.id && (
                         <button onClick={() => { setRenamingId(a.id); setRenameVal(a.nome); }}
@@ -481,15 +487,28 @@ export default function DiarioPage() {
 
         {/* Criar aquário */}
         {criandoAq && (
-          <div className="glass rounded-2xl p-5 border border-cyan-500/20 flex gap-3 items-center">
-            <ClipboardList className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-            <input autoFocus type="text" placeholder="Nome do aquário (ex: Plantado 80L)"
-              value={novoAqNome} onChange={e => setNovoAqNome(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") criarAquario(); if (e.key === "Escape") setCriandoAq(false); }}
-              className="input-ocean flex-1"
-            />
-            <button onClick={criarAquario} className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-semibold hover:opacity-90 transition-all whitespace-nowrap">Criar</button>
-            <button onClick={() => setCriandoAq(false)} className="p-2 text-slate-500 hover:text-slate-300"><X className="w-4 h-4" /></button>
+          <div className="glass rounded-2xl p-5 border border-cyan-500/20 space-y-3">
+            <div className="flex gap-3 items-center">
+              <ClipboardList className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+              <input autoFocus type="text" placeholder="Nome do aquário (ex: Plantado 80L)"
+                value={novoAqNome} onChange={e => setNovoAqNome(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") criarAquario(); if (e.key === "Escape") setCriandoAq(false); }}
+                className="input-ocean flex-1"
+              />
+              <button onClick={() => setCriandoAq(false)} className="p-2 text-slate-500 hover:text-slate-300"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="flex items-center gap-2 pl-8">
+              <span className="text-xs text-slate-500 font-medium mr-1">Tipo:</span>
+              <button onClick={() => setNovoAqTipo("doce")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${novoAqTipo === "doce" ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/30" : "text-slate-500 border-white/10 hover:text-slate-300 hover:border-white/20"}`}>
+                💧 Água Doce
+              </button>
+              <button onClick={() => setNovoAqTipo("salgado")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${novoAqTipo === "salgado" ? "bg-blue-500/15 text-blue-300 border-blue-500/30" : "text-slate-500 border-white/10 hover:text-slate-300 hover:border-white/20"}`}>
+                🌊 Água Salgada
+              </button>
+              <button onClick={criarAquario} className="ml-auto px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-semibold hover:opacity-90 transition-all whitespace-nowrap">Criar</button>
+            </div>
           </div>
         )}
 
@@ -618,13 +637,23 @@ export default function DiarioPage() {
                   <div className="p-5 space-y-4">
                     {(["universal", "doce", "salgado"] as const).map(cat => {
                       const catParams = TODOS_PARAMS.filter(p => p.category === cat);
+                      const bloqueado = (cat === "doce" && aq.tipo === "salgado") || (cat === "salgado" && aq.tipo === "doce");
                       const catLabel = cat === "universal" ? "🌐 Universal" : cat === "doce" ? "💧 Água Doce" : "🌊 Água Salgada / Recife";
                       return (
                         <div key={cat}>
-                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{catLabel}</p>
+                          <div className="flex items-center gap-2 mb-2">
+                            <p className={`text-xs font-semibold uppercase tracking-wider ${bloqueado ? "text-slate-700" : "text-slate-500"}`}>{catLabel}</p>
+                            {bloqueado && <span className="text-[10px] text-slate-700 border border-slate-700/40 rounded px-1.5 py-0.5">não disponível para este tipo</span>}
+                          </div>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             {catParams.map(p => {
                               const ativo = aq.params.includes(p.key);
+                              if (bloqueado) return (
+                                <div key={p.key} className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/4 text-sm font-medium opacity-30 cursor-not-allowed select-none">
+                                  <p.icon className="w-4 h-4 text-slate-700" />
+                                  <span className="text-slate-700">{p.label}</span>
+                                </div>
+                              );
                               return (
                                 <button key={p.key} onClick={() => toggleParam(p.key)}
                                   className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${ativo ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" : "border-white/8 text-slate-500 hover:text-slate-300 hover:border-white/15"}`}>
