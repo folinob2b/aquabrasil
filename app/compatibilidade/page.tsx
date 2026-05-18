@@ -1,15 +1,24 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Plus, X, CheckCircle2, XCircle, AlertTriangle, Shuffle,
-  Thermometer, FlaskConical, Ruler, Sparkles, Layers, Droplets,
-  Users, TriangleAlert,
+  Thermometer, FlaskConical, Ruler, Sparkles, Layers,
+  Users, TriangleAlert, BookmarkPlus, FolderOpen, Trash2, Save,
 } from "lucide-react";
 import {
   peixes, getCompatibilidade, temperamentoLabel, zonaLabel,
   type Peixe, type ZonaNatacao, type Tamanho,
 } from "@/data/peixes";
 import BubbleBackground from "@/components/BubbleBackground";
+import { useAuth } from "@/context/AuthContext";
+
+interface GrupoSalvo {
+  id: string;
+  nome: string;
+  peixeIds: string[];
+  criadoEm: string;
+}
+const STORAGE_GRUPOS = "aquabrasil_grupos_salvos";
 
 // ── Foto thumb (circular, pequena) ─────────────────────────────────────────
 function PeixeThumb({ peixe, size = 10 }: { peixe: Peixe; size?: number }) {
@@ -159,7 +168,7 @@ function SeletorPeixes({ selecionados, onAdd, onRemove, analise }: {
         <div>
           <h2 className="text-white font-bold text-base flex items-center gap-2">
             <Shuffle className="w-4 h-4 text-cyan-400" />
-            Monte seu grupo
+            Confira a compatibilidade do seu grupo
             {selecionados.length > 0 && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/25 text-cyan-400 font-semibold">
                 {selecionados.length} {selecionados.length === 1 ? "peixe" : "peixes"}
@@ -167,7 +176,7 @@ function SeletorPeixes({ selecionados, onAdd, onRemove, analise }: {
             )}
           </h2>
           {selecionados.length === 0 && (
-            <p className="text-slate-600 text-xs mt-0.5">Adicione espécies para analisar compatibilidade ou ver sugestões.</p>
+            <p className="text-slate-600 text-xs mt-0.5">Monte seu grupo e veja se as espécies convivem em harmonia.</p>
           )}
           {selecionados.length === 1 && (
             <p className="text-slate-600 text-xs mt-0.5">Adicione pelo menos mais 1 espécie para analisar o grupo.</p>
@@ -183,7 +192,25 @@ function SeletorPeixes({ selecionados, onAdd, onRemove, analise }: {
 
       {/* Galeria de peixes selecionados */}
       {selecionados.length === 0 ? (
-        <div className="px-5 py-5 text-slate-700 text-sm italic">Nenhum peixe selecionado ainda.</div>
+        <div className="px-5 py-8 flex flex-col items-center gap-4">
+          <div className="flex items-end justify-center gap-1">
+            {peixes.filter(p => p.tipo === "agua-doce" && p.foto).slice(0, 7).map((p, i) => {
+              const sizes = ["w-10 h-10", "w-12 h-12", "w-14 h-14", "w-16 h-16", "w-14 h-14", "w-12 h-12", "w-10 h-10"];
+              const opacities = ["opacity-40", "opacity-55", "opacity-70", "opacity-100", "opacity-70", "opacity-55", "opacity-40"];
+              return (
+                <div key={p.id} className={`${sizes[i]} ${opacities[i]} rounded-full overflow-hidden border-2 border-cyan-900/30 flex-shrink-0 bg-ocean-900 transition-all`}>
+                  {p.foto
+                    ? <img src={p.foto} alt={p.nome} className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-xl">{p.emoji}</div>}
+                </div>
+              );
+            })}
+          </div>
+          <div className="text-center">
+            <p className="text-slate-400 font-medium text-sm">Adicione peixes para verificar a compatibilidade</p>
+            <p className="text-slate-600 text-xs mt-1">Temperatura, pH e temperamento são analisados automaticamente</p>
+          </div>
+        </div>
       ) : (
         <div className="px-5 py-4 flex gap-3 overflow-x-auto scrollbar-hide">
           {selecionados.map(p => {
@@ -225,15 +252,67 @@ function SeletorPeixes({ selecionados, onAdd, onRemove, analise }: {
 
 // ── Página principal ───────────────────────────────────────────────────────
 export default function CompatibilidadePage() {
+  const { user } = useAuth();
   const [selecionados, setSelecionados] = useState<Peixe[]>([]);
   const [aba, setAba] = useState<"analisar" | "sugestoes">("analisar");
   const [filtroZona, setFiltroZona] = useState<ZonaNatacao | "">("");
   const [filtroTamanho, setFiltroTamanho] = useState<Tamanho | "">("");
   const [filtroTemp, setFiltroTemp] = useState<"pacifico" | "">("");
+  const [gruposSalvos, setGruposSalvos] = useState<GrupoSalvo[]>([]);
+  const [salvandoGrupo, setSalvandoGrupo] = useState(false);
+  const [nomeGrupo, setNomeGrupo] = useState("");
+  const [feedbackSalvo, setFeedbackSalvo] = useState("");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_GRUPOS);
+      if (raw) setGruposSalvos(JSON.parse(raw));
+    } catch {}
+  }, []);
 
   const peixesDoce = peixes.filter(p => p.tipo === "agua-doce");
   const addPeixe    = (p: Peixe) => { if (!selecionados.find(s => s.id === p.id)) setSelecionados([...selecionados, p]); };
   const removerPeixe = (id: string) => setSelecionados(selecionados.filter(p => p.id !== id));
+
+  function salvarGrupo() {
+    const nome = nomeGrupo.trim() || `Grupo ${new Date().toLocaleDateString("pt-BR")}`;
+    const novo: GrupoSalvo = { id: crypto.randomUUID(), nome, peixeIds: selecionados.map(p => p.id), criadoEm: new Date().toISOString() };
+    const lista = [novo, ...gruposSalvos];
+    setGruposSalvos(lista);
+    try { localStorage.setItem(STORAGE_GRUPOS, JSON.stringify(lista)); } catch {}
+    setSalvandoGrupo(false);
+    setNomeGrupo("");
+    setFeedbackSalvo("Grupo salvo!");
+    setTimeout(() => setFeedbackSalvo(""), 2500);
+  }
+
+  function salvarComoAquario() {
+    const nome = nomeGrupo.trim() || `Aquário ${new Date().toLocaleDateString("pt-BR")}`;
+    try {
+      const raw = localStorage.getItem("aquabrasil_aquarios_v2");
+      const lista = raw ? JSON.parse(raw) : [];
+      const novo = {
+        id: crypto.randomUUID(), nome, tipo: "doce", params: ["temperatura", "ph", "amonia", "nitrito", "nitrato"],
+        baseline: {}, peixes: selecionados.map(p => ({ id: p.id, nome: p.nome, quantidade: 1 })),
+      };
+      localStorage.setItem("aquabrasil_aquarios_v2", JSON.stringify([...lista, novo]));
+    } catch {}
+    setSalvandoGrupo(false);
+    setNomeGrupo("");
+    setFeedbackSalvo("Salvo no Diário do Aquário!");
+    setTimeout(() => setFeedbackSalvo(""), 2500);
+  }
+
+  function carregarGrupo(g: GrupoSalvo) {
+    const carregados = g.peixeIds.map(id => peixes.find(p => p.id === id)).filter(Boolean) as Peixe[];
+    setSelecionados(carregados);
+  }
+
+  function excluirGrupo(id: string) {
+    const lista = gruposSalvos.filter(g => g.id !== id);
+    setGruposSalvos(lista);
+    try { localStorage.setItem(STORAGE_GRUPOS, JSON.stringify(lista)); } catch {}
+  }
 
   const analise = useMemo(() => selecionados.length >= 2 ? calcularGrupo(selecionados) : null, [selecionados]);
   const todasSugestoes = useMemo(() => calcularSugestoes(selecionados, peixesDoce), [selecionados]);
@@ -254,13 +333,85 @@ export default function CompatibilidadePage() {
             <span className="text-gradient">Compatibilidade</span> de Peixes
           </h1>
           <p className="text-slate-400 text-lg max-w-2xl">
-            Monte seu grupo e veja se as espécies convivem — ou descubra novas para adicionar.
+            Confira a compatibilidade do seu grupo de peixes — analise parâmetros, conflitos e descubra novas espécies para adicionar.
           </p>
         </div>
       </section>
 
       <section className="px-6 sm:px-8 py-12">
         <SeletorPeixes selecionados={selecionados} onAdd={addPeixe} onRemove={removerPeixe} analise={analise} />
+
+        {/* ── Salvar grupo (usuário logado) ── */}
+        {user && selecionados.length >= 2 && (
+          <div className="mb-6">
+            {!salvandoGrupo ? (
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSalvandoGrupo(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-cyan-500/25 bg-cyan-500/8 text-cyan-400 text-sm font-semibold hover:bg-cyan-500/15 transition-all">
+                  <BookmarkPlus className="w-4 h-4" /> Salvar grupo
+                </button>
+                {feedbackSalvo && <span className="text-xs text-emerald-400 font-medium">{feedbackSalvo}</span>}
+              </div>
+            ) : (
+              <div className="glass rounded-2xl p-4 border border-cyan-500/20 flex flex-wrap items-center gap-3">
+                <input autoFocus type="text" placeholder="Nome do grupo (opcional)"
+                  value={nomeGrupo} onChange={e => setNomeGrupo(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && salvarGrupo()}
+                  className="input-ocean text-sm flex-1 min-w-[180px]"
+                />
+                <button onClick={salvarGrupo}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/25 text-cyan-300 text-sm font-semibold hover:bg-cyan-500/25 transition-all">
+                  <Save className="w-3.5 h-3.5" /> Salvar grupo
+                </button>
+                <button onClick={salvarComoAquario}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/15 border border-violet-500/25 text-violet-300 text-sm font-semibold hover:bg-violet-500/25 transition-all">
+                  <Plus className="w-3.5 h-3.5" /> Salvar como aquário
+                </button>
+                <button onClick={() => { setSalvandoGrupo(false); setNomeGrupo(""); }} className="p-2 text-slate-500 hover:text-slate-300">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Grupos salvos ── */}
+        {user && gruposSalvos.length > 0 && (
+          <div className="mb-6 glass rounded-2xl border border-white/8 overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5">
+              <FolderOpen className="w-4 h-4 text-cyan-400" />
+              <span className="text-white font-semibold text-sm">Grupos salvos</span>
+              <span className="text-slate-600 text-xs ml-1">{gruposSalvos.length}</span>
+            </div>
+            <div className="divide-y divide-white/5">
+              {gruposSalvos.map(g => {
+                const peixesGrupo = g.peixeIds.map(id => peixes.find(p => p.id === id)).filter(Boolean) as Peixe[];
+                return (
+                  <div key={g.id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/2 transition-colors group">
+                    <div className="flex -space-x-2 flex-shrink-0">
+                      {peixesGrupo.slice(0, 4).map(p => (
+                        <div key={p.id} className="w-7 h-7 rounded-full border-2 border-ocean-950 overflow-hidden bg-ocean-900 flex items-center justify-center flex-shrink-0">
+                          {p.foto ? <img src={p.foto} alt={p.nome} className="w-full h-full object-cover" /> : <span className="text-xs">{p.emoji}</span>}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-slate-200 text-sm font-medium truncate">{g.nome}</p>
+                      <p className="text-slate-600 text-xs">{g.peixeIds.length} peixes · {new Date(g.criadoEm).toLocaleDateString("pt-BR")}</p>
+                    </div>
+                    <button onClick={() => carregarGrupo(g)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-all flex-shrink-0">
+                      Carregar
+                    </button>
+                    <button onClick={() => excluirGrupo(g.id)} className="opacity-0 group-hover:opacity-100 p-1 text-slate-700 hover:text-rose-400 transition-all flex-shrink-0">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Abas */}
         {selecionados.length >= 1 && (
@@ -404,30 +555,60 @@ export default function CompatibilidadePage() {
                   </div>
                 )}
 
-                {/* ── Sugestão de remoção ── */}
-                {analise.problemaPorPeixe.length > 0 && analise.verdict === "incompativel" && (
-                  <div className="glass rounded-2xl p-5 border border-cyan-900/15">
-                    <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-                      <TriangleAlert className="w-4 h-4 text-cyan-400" /> Causa mais conflitos
-                    </h3>
-                    <div className="flex flex-wrap gap-3">
-                      {analise.problemaPorPeixe.slice(0, 3).map(({ peixe, criticos, atencoes }) => (
-                        <div key={peixe.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/4 border border-white/8">
-                          <PeixeThumb peixe={peixe} size={8} />
-                          <div>
-                            <div className="text-white text-sm font-medium">{peixe.nome}</div>
-                            <div className="text-xs text-slate-500">
-                              {criticos > 0 && <span className="text-rose-400">{criticos} conflito{criticos > 1 ? "s" : ""}</span>}
-                              {criticos > 0 && atencoes > 0 && " · "}
-                              {atencoes > 0 && <span className="text-amber-400">{atencoes} atenção</span>}
+                {/* ── Otimizador de conflitos ── */}
+                {analise.verdict !== "compativel" && (() => {
+                  // Para cada peixe, simula a remoção e conta conflitos restantes
+                  const simulacoes = selecionados.map(candidato => {
+                    const semEle = selecionados.filter(p => p.id !== candidato.id);
+                    const analSem = semEle.length >= 2 ? calcularGrupo(semEle) : null;
+                    const criticosSem = analSem?.criticos.length ?? 0;
+                    const atencoesSem = analSem?.atencoes.length ?? 0;
+                    const criticosEliminados = analise.criticos.length - criticosSem;
+                    const atencoesEliminadas = analise.atencoes.length - atencoesSem;
+                    const score = criticosEliminados * 10 + atencoesEliminadas;
+                    return { peixe: candidato, criticosSem, atencoesSem, criticosEliminados, atencoesEliminadas, score, resolveTudo: criticosSem === 0 && atencoesSem === 0 };
+                  }).sort((a, b) => b.score - a.score).filter(s => s.score > 0);
+
+                  if (simulacoes.length === 0) return null;
+                  const melhor = simulacoes[0];
+
+                  return (
+                    <div className="glass rounded-2xl p-5 border border-cyan-900/15">
+                      <h3 className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
+                        <TriangleAlert className="w-4 h-4 text-cyan-400" /> Como resolver os conflitos
+                      </h3>
+                      <div className="space-y-2">
+                        {simulacoes.slice(0, 4).map((s, i) => (
+                          <div key={s.peixe.id} className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${i === 0 ? "bg-cyan-500/6 border-cyan-500/20" : "bg-white/2 border-white/6"}`}>
+                            <PeixeThumb peixe={s.peixe} size={8} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-white text-sm font-medium">{s.peixe.nome}</span>
+                                {i === 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/25 font-semibold">Melhor opção</span>}
+                                {s.resolveTudo && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/20 font-semibold">✓ Resolve tudo</span>}
+                              </div>
+                              <div className="text-xs text-slate-500 mt-0.5">
+                                Removendo: elimina{" "}
+                                {s.criticosEliminados > 0 && <span className="text-rose-400">{s.criticosEliminados} conflito{s.criticosEliminados > 1 ? "s" : ""} grave{s.criticosEliminados > 1 ? "s" : ""}</span>}
+                                {s.criticosEliminados > 0 && s.atencoesEliminadas > 0 && " e "}
+                                {s.atencoesEliminadas > 0 && <span className="text-amber-400">{s.atencoesEliminadas} atenção{s.atencoesEliminadas > 1 ? "ões" : ""}</span>}
+                                {s.criticosSem > 0 && <span className="text-slate-600"> · restam {s.criticosSem} grave{s.criticosSem > 1 ? "s" : ""}</span>}
+                              </div>
                             </div>
+                            <button onClick={() => removerPeixe(s.peixe.id)}
+                              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all">
+                              Remover
+                            </button>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                      {melhor.resolveTudo
+                        ? <p className="text-emerald-500/70 text-xs mt-3">Remover <strong className="text-emerald-400">{melhor.peixe.nome}</strong> resolve todos os conflitos do grupo.</p>
+                        : <p className="text-slate-600 text-xs mt-3">Nenhuma remoção única resolve todos os conflitos — pode ser necessário remover mais de um peixe.</p>
+                      }
                     </div>
-                    <p className="text-slate-600 text-xs mt-3">Remover o peixe com mais conflitos pode resolver a maioria dos problemas do grupo.</p>
-                  </div>
-                )}
+                  );
+                })()}
 
 
               </div>

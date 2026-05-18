@@ -811,24 +811,24 @@ export default function DiarioPage() {
                 {(aq.peixes ?? []).length === 0 && !adicionandoPeixe ? (
                   <p className="text-slate-700 text-xs">Nenhum peixe adicionado ainda.</p>
                 ) : (
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-wrap gap-2">
                     {(aq.peixes ?? []).map(p => {
                       const catalogoPeixe = catalogoPeixes.find(c => c.id === p.id);
                       return (
-                        <div key={p.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/3 transition-colors group">
-                          {catalogoPeixe?.foto
-                            ? <img src={catalogoPeixe.foto} alt={p.nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                            : <span className="w-8 h-8 flex items-center justify-center text-lg flex-shrink-0">{catalogoPeixe?.emoji ?? "🐠"}</span>
-                          }
-                          <span className="text-slate-300 text-sm flex-1 truncate">{p.nome}</span>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <button onClick={() => alterarQuantidadePeixe(p.id, -1)} className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">−</button>
-                            <span className="text-xs text-slate-300 font-medium w-5 text-center">{p.quantidade}</span>
-                            <button onClick={() => alterarQuantidadePeixe(p.id, +1)} className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">+</button>
-                          </div>
-                          <button onClick={() => removerPeixeDoAquario(p.id)} className="opacity-0 group-hover:opacity-100 p-1 text-slate-700 hover:text-rose-400 transition-all flex-shrink-0">
-                            <X className="w-3 h-3" />
+                        <div key={p.id} className="relative flex flex-col items-center gap-1 p-2 rounded-xl bg-white/3 border border-white/6 hover:border-white/12 transition-colors group w-[72px]">
+                          <button onClick={() => removerPeixeDoAquario(p.id)} className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white items-center justify-center hidden group-hover:flex transition-all z-10">
+                            <X className="w-2.5 h-2.5" />
                           </button>
+                          {catalogoPeixe?.foto
+                            ? <img src={catalogoPeixe.foto} alt={p.nome} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                            : <span className="w-10 h-10 flex items-center justify-center text-2xl">{catalogoPeixe?.emoji ?? "🐠"}</span>
+                          }
+                          <span className="text-slate-300 text-[10px] font-medium text-center leading-tight line-clamp-2 w-full">{p.nome}</span>
+                          <div className="flex items-center gap-0.5">
+                            <button onClick={() => alterarQuantidadePeixe(p.id, -1)} className="w-4 h-4 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">−</button>
+                            <span className="text-xs text-cyan-300 font-bold w-4 text-center">{p.quantidade}</span>
+                            <button onClick={() => alterarQuantidadePeixe(p.id, +1)} className="w-4 h-4 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">+</button>
+                          </div>
                         </div>
                       );
                     })}
