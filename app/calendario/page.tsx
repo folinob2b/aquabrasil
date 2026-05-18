@@ -4,12 +4,15 @@ import {
   Plus, Trash2, CalendarDays, Thermometer, FlaskConical,
   Droplets, Wind, AlertTriangle, ChevronDown, TrendingUp,
   CheckCircle, XCircle, Lightbulb, Settings, Pencil, X,
-  ClipboardList, Beaker, Camera, Leaf,
+  ClipboardList, Beaker, Camera, Leaf, Waves, Gauge, Zap, Activity,
 } from "lucide-react";
 import BubbleBackground from "@/components/BubbleBackground";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type ParamKey = "temperatura" | "ph" | "amonia" | "nitrito" | "nitrato" | "dureza";
+type ParamKey =
+  | "temperatura" | "ph" | "amonia" | "nitrito" | "nitrato" | "oxigenio" | "fosfato" | "kh"
+  | "dureza" | "co2" | "tds" | "ferro"
+  | "salinidade" | "calcio" | "magnesio" | "orp";
 
 type Baseline = Partial<Record<ParamKey, { min: number; max: number }>>;
 
@@ -32,7 +35,17 @@ interface Medicao {
   amonia: string;
   nitrito: string;
   nitrato: string;
+  oxigenio: string;
+  fosfato: string;
+  kh: string;
   dureza: string;
+  co2: string;
+  tds: string;
+  ferro: string;
+  salinidade: string;
+  calcio: string;
+  magnesio: string;
+  orp: string;
   obs: string;
 }
 
@@ -40,14 +53,27 @@ interface Medicao {
 const TODOS_PARAMS: {
   key: ParamKey; label: string; unit: string; icon: React.ComponentType<{ className?: string }>;
   color: string; stroke: string; ideal: string; idealMin: number; idealMax: number;
-  min: number; max: number; placeholder: string;
+  min: number; max: number; placeholder: string; category: "universal" | "doce" | "salgado";
 }[] = [
-  { key: "temperatura", label: "Temperatura", unit: "°C",  icon: Thermometer,  color: "text-orange-400", stroke: "#fb923c", ideal: "24–28°C",  idealMin: 22, idealMax: 30,  min: 0,  max: 40,  placeholder: "ex: 26"  },
-  { key: "ph",          label: "pH",          unit: "",    icon: FlaskConical, color: "text-emerald-400",stroke: "#34d399", ideal: "6.5–7.5",  idealMin: 6.5,idealMax: 7.5,  min: 4,  max: 10,  placeholder: "ex: 7.0" },
-  { key: "amonia",      label: "Amônia",      unit: "ppm", icon: Wind,         color: "text-red-400",    stroke: "#f87171", ideal: "0 ppm",    idealMin: 0,  idealMax: 0.1, min: 0,  max: 8,   placeholder: "ex: 0"   },
-  { key: "nitrito",     label: "Nitrito",     unit: "ppm", icon: Wind,         color: "text-rose-400",   stroke: "#fb7185", ideal: "0 ppm",    idealMin: 0,  idealMax: 0.25,min: 0,  max: 5,   placeholder: "ex: 0"   },
-  { key: "nitrato",     label: "Nitrato",     unit: "ppm", icon: Droplets,     color: "text-amber-400",  stroke: "#fbbf24", ideal: "< 20 ppm", idealMin: 0,  idealMax: 20,  min: 0,  max: 160, placeholder: "ex: 10"  },
-  { key: "dureza",      label: "Dureza (GH)", unit: "dGH", icon: Droplets,     color: "text-sky-400",    stroke: "#38bdf8", ideal: "4–12 dGH", idealMin: 4,  idealMax: 12,  min: 0,  max: 30,  placeholder: "ex: 8"   },
+  // Universal
+  { key: "temperatura", label: "Temperatura",  unit: "°C",   icon: Thermometer,  color: "text-orange-400",  stroke: "#fb923c", ideal: "24–28°C",       idealMin: 22,   idealMax: 30,   min: 0,   max: 40,   placeholder: "ex: 26",    category: "universal" },
+  { key: "ph",          label: "pH",           unit: "",     icon: FlaskConical, color: "text-emerald-400", stroke: "#34d399", ideal: "6.5–7.5",       idealMin: 6.5,  idealMax: 7.5,  min: 4,   max: 10,   placeholder: "ex: 7.0",   category: "universal" },
+  { key: "amonia",      label: "Amônia",       unit: "ppm",  icon: Wind,         color: "text-red-400",     stroke: "#f87171", ideal: "0 ppm",         idealMin: 0,    idealMax: 0.1,  min: 0,   max: 8,    placeholder: "ex: 0",     category: "universal" },
+  { key: "nitrito",     label: "Nitrito",      unit: "ppm",  icon: Wind,         color: "text-rose-400",    stroke: "#fb7185", ideal: "0 ppm",         idealMin: 0,    idealMax: 0.25, min: 0,   max: 5,    placeholder: "ex: 0",     category: "universal" },
+  { key: "nitrato",     label: "Nitrato",      unit: "ppm",  icon: Droplets,     color: "text-amber-400",   stroke: "#fbbf24", ideal: "< 20 ppm",      idealMin: 0,    idealMax: 20,   min: 0,   max: 160,  placeholder: "ex: 10",    category: "universal" },
+  { key: "oxigenio",    label: "Oxigênio",     unit: "mg/L", icon: Activity,     color: "text-blue-300",    stroke: "#93c5fd", ideal: "6–10 mg/L",     idealMin: 6,    idealMax: 10,   min: 0,   max: 20,   placeholder: "ex: 8",     category: "universal" },
+  { key: "fosfato",     label: "Fosfato",      unit: "ppm",  icon: FlaskConical, color: "text-purple-400",  stroke: "#c084fc", ideal: "0–0.1 ppm",     idealMin: 0,    idealMax: 0.1,  min: 0,   max: 5,    placeholder: "ex: 0.05",  category: "universal" },
+  { key: "kh",          label: "Dureza KH",    unit: "dKH",  icon: Droplets,     color: "text-indigo-400",  stroke: "#818cf8", ideal: "4–8 dKH",       idealMin: 4,    idealMax: 8,    min: 0,   max: 25,   placeholder: "ex: 6",     category: "universal" },
+  // Água Doce
+  { key: "dureza",      label: "Dureza GH",    unit: "dGH",  icon: Droplets,     color: "text-sky-400",     stroke: "#38bdf8", ideal: "4–12 dGH",      idealMin: 4,    idealMax: 12,   min: 0,   max: 30,   placeholder: "ex: 8",     category: "doce" },
+  { key: "co2",         label: "CO₂",          unit: "mg/L", icon: Wind,         color: "text-lime-400",    stroke: "#a3e635", ideal: "10–30 mg/L",    idealMin: 10,   idealMax: 30,   min: 0,   max: 50,   placeholder: "ex: 20",    category: "doce" },
+  { key: "tds",         label: "TDS",          unit: "ppm",  icon: Gauge,        color: "text-teal-400",    stroke: "#2dd4bf", ideal: "100–300 ppm",   idealMin: 100,  idealMax: 300,  min: 0,   max: 2000, placeholder: "ex: 200",   category: "doce" },
+  { key: "ferro",       label: "Ferro",        unit: "mg/L", icon: FlaskConical, color: "text-yellow-600",  stroke: "#ca8a04", ideal: "0.05–0.1 mg/L", idealMin: 0.05, idealMax: 0.1,  min: 0,   max: 2,    placeholder: "ex: 0.1",   category: "doce" },
+  // Água Salgada
+  { key: "salinidade",  label: "Salinidade",   unit: "ppt",  icon: Waves,        color: "text-cyan-300",    stroke: "#67e8f9", ideal: "33–36 ppt",     idealMin: 33,   idealMax: 36,   min: 0,   max: 50,   placeholder: "ex: 35",    category: "salgado" },
+  { key: "calcio",      label: "Cálcio",       unit: "ppm",  icon: Droplets,     color: "text-blue-400",    stroke: "#60a5fa", ideal: "380–450 ppm",   idealMin: 380,  idealMax: 450,  min: 0,   max: 600,  placeholder: "ex: 420",   category: "salgado" },
+  { key: "magnesio",    label: "Magnésio",     unit: "ppm",  icon: Droplets,     color: "text-violet-400",  stroke: "#a78bfa", ideal: "1250–1350 ppm", idealMin: 1250, idealMax: 1350, min: 0,   max: 2000, placeholder: "ex: 1300",  category: "salgado" },
+  { key: "orp",         label: "ORP/Redox",    unit: "mV",   icon: Zap,          color: "text-orange-300",  stroke: "#fdba74", ideal: "300–400 mV",    idealMin: 300,  idealMax: 400,  min: 0,   max: 600,  placeholder: "ex: 350",   category: "salgado" },
 ];
 
 const PARAMS_PADRAO: ParamKey[] = ["temperatura", "ph", "amonia", "nitrito", "nitrato"];
@@ -56,8 +82,18 @@ const STORAGE_AQUARIOS = "aquabrasil_aquarios_v2";
 const STORAGE_MEDICOES  = "aquabrasil_medicoes_v2";
 
 // ── Defaults ─────────────────────────────────────────────────────────────────
-const DEFAULT_OK  : Record<ParamKey, [number, number]> = { temperatura:[22,30], ph:[6.5,7.5], amonia:[0,0.25], nitrito:[0,0.25], nitrato:[0,20],  dureza:[4,15]  };
-const DEFAULT_WARN: Record<ParamKey, [number, number]> = { temperatura:[18,32], ph:[6.0,8.5], amonia:[0,0.5],  nitrito:[0,0.5],  nitrato:[0,40],  dureza:[1,25]  };
+const DEFAULT_OK  : Record<ParamKey, [number, number]> = {
+  temperatura:[22,30],  ph:[6.5,7.5],  amonia:[0,0.25],   nitrito:[0,0.25],  nitrato:[0,20],
+  oxigenio:[6,10],      fosfato:[0,0.1], kh:[4,8],
+  dureza:[4,15],        co2:[10,30],   tds:[100,300],     ferro:[0.05,0.1],
+  salinidade:[33,36],   calcio:[380,450], magnesio:[1250,1350], orp:[300,400],
+};
+const DEFAULT_WARN: Record<ParamKey, [number, number]> = {
+  temperatura:[18,32],  ph:[6.0,8.5],  amonia:[0,0.5],    nitrito:[0,0.5],   nitrato:[0,40],
+  oxigenio:[5,12],      fosfato:[0,0.25], kh:[3,10],
+  dureza:[1,25],        co2:[5,40],    tds:[50,500],      ferro:[0,0.3],
+  salinidade:[30,38],   calcio:[350,480], magnesio:[1150,1400], orp:[250,450],
+};
 
 // ── Status ────────────────────────────────────────────────────────────────────
 function getStatus(key: ParamKey, val: string, baseline?: Baseline): "ok" | "warn" | "danger" | null {
@@ -75,12 +111,22 @@ function getStatus(key: ParamKey, val: string, baseline?: Baseline): "ok" | "war
 
 // ── Dicas ─────────────────────────────────────────────────────────────────────
 const DICAS: Record<ParamKey, { titulo: string; baixo: string; alto: string }> = {
-  temperatura: { titulo: "Temperatura",  baixo: "Verifique o aquecedor. Aumente a potência ou adicione um segundo. Mantenha longe de ar-condicionado.", alto: "Reduza a iluminação. Use ventilador sobre a superfície. Adicione gelo temporariamente." },
-  ph:          { titulo: "pH",           baixo: "Adicione bicarbonato de sódio gradualmente (1 g/100 L). Use substrato calcário. Faça TPA com água mais alcalina.", alto: "Coloque turfa ou folhas de Catappa no filtro. CO₂ injetado abaixa o pH. Faça TPA com água mais ácida." },
-  amonia:      { titulo: "Amônia",       baixo: "Amônia em 0 é ideal — mantenha assim.",       alto: "URGENTE: TPA de 25–30% imediatamente. Cesse a alimentação por 2 dias. Verifique material em decomposição." },
-  nitrito:     { titulo: "Nitrito",      baixo: "Nitrito em 0 é ideal — mantenha assim.",       alto: "TPA de 25%. Adicione sal (1–2 g/L). Introduza bactérias nitrificantes. Não sobrecarregue o filtro." },
-  nitrato:     { titulo: "Nitrato",      baixo: "Nitrato baixo indica aquário saudável.",       alto: "TPA de 20–25% semanalmente. Reduza a ração. Adicione plantas. Verifique excesso de peixes." },
-  dureza:      { titulo: "Dureza (GH)",  baixo: "Adicione osso de sépia ou pedra calcária ao filtro. Misture água da torneira com água de osmose.", alto: "Misture água da torneira com água de osmose reversa ou destilada. Remova pedras calcárias." },
+  temperatura: { titulo: "Temperatura",   baixo: "Verifique o aquecedor. Aumente a potência ou adicione um segundo. Mantenha longe de ar-condicionado.", alto: "Reduza a iluminação. Use ventilador sobre a superfície. Adicione gelo temporariamente." },
+  ph:          { titulo: "pH",            baixo: "Adicione bicarbonato de sódio gradualmente (1 g/100 L). Use substrato calcário. Faça TPA com água mais alcalina.", alto: "Coloque turfa ou folhas de Catappa no filtro. CO₂ injetado abaixa o pH. Faça TPA com água mais ácida." },
+  amonia:      { titulo: "Amônia",        baixo: "Amônia em 0 é ideal — mantenha assim.", alto: "URGENTE: TPA de 25–30% imediatamente. Cesse a alimentação por 2 dias. Verifique material em decomposição." },
+  nitrito:     { titulo: "Nitrito",       baixo: "Nitrito em 0 é ideal — mantenha assim.", alto: "TPA de 25%. Adicione sal (1–2 g/L). Introduza bactérias nitrificantes. Não sobrecarregue o filtro." },
+  nitrato:     { titulo: "Nitrato",       baixo: "Nitrato baixo indica aquário saudável.", alto: "TPA de 20–25% semanalmente. Reduza a ração. Adicione plantas. Verifique excesso de peixes." },
+  oxigenio:    { titulo: "Oxigênio",      baixo: "Aumente aeração imediatamente. Reduza temperatura (água quente retém menos O₂). Verifique superpopulação.", alto: "Oxigênio alto é geralmente benéfico. Em tanques com CO₂ injetado pode indicar super-saturação." },
+  fosfato:     { titulo: "Fosfato",       baixo: "Fosfato baixo é normal. Em plantados, um leve fosfato é necessário para as plantas crescerem bem.", alto: "Reduza a alimentação. Aumente TPA. Use resina removedora de fosfato no filtro." },
+  kh:          { titulo: "Dureza KH",     baixo: "Adicione bicarbonato de sódio ou tampão KH. KH baixo causa quedas bruscas de pH — risco de crash.", alto: "Faça TPA com água de osmose reversa. Evite pedras calcárias no aquário." },
+  dureza:      { titulo: "Dureza GH",     baixo: "Adicione osso de sépia ou pedra calcária ao filtro. Misture água da torneira com água de osmose.", alto: "Misture água da torneira com água de osmose reversa ou destilada. Remova pedras calcárias." },
+  co2:         { titulo: "CO₂",           baixo: "Aumente a injeção de CO₂. Verifique vazamentos no difusor. Reduza agitação da superfície.", alto: "Reduza a injeção de CO₂. Aumente aeração. Peixes podem mostrar respiração acelerada na superfície." },
+  tds:         { titulo: "TDS",           baixo: "TDS muito baixo indica água muito pura. Adicione fertilizantes ou use substrato ativo.", alto: "Faça TPA com água de osmose. Verifique excesso de fertilizantes ou medicamentos." },
+  ferro:       { titulo: "Ferro",         baixo: "Adicione fertilizante ferroso quelado (Fe-EDTA ou Fe-DTPA). Ferro é essencial para o crescimento das plantas.", alto: "Reduza a dosagem de fertilizante ferroso. Faça TPA. Ferro alto pode favorecer algas." },
+  salinidade:  { titulo: "Salinidade",    baixo: "Adicione sal marinho dissolvido em água separada. Ajuste gradualmente (máx. 0.5 ppt/dia).", alto: "Adicione água doce em pequenas quantidades. Verifique evaporação excessiva. Ajuste gradualmente." },
+  calcio:      { titulo: "Cálcio",        baixo: "Adicione cloreto de cálcio (CaCl₂) ou use reator de calcário. Cálcio baixo inibe crescimento de corais.", alto: "Reduza dosagem de suplemento. Verifique equilíbrio com KH. Cálcio muito alto pode precipitar." },
+  magnesio:    { titulo: "Magnésio",      baixo: "Adicione sulfato de magnésio (MgSO₄). Magnésio baixo impede que cálcio e KH se estabilizem.", alto: "Reduza ou suspenda dosagem de magnésio. Faça TPA parcial." },
+  orp:         { titulo: "ORP/Redox",     baixo: "Verifique a proteína skimmer. Aumente aeração e circulação. Reduza carga orgânica.", alto: "ORP muito alto pode ser tóxico. Verifique dosagem de ozônio se usar. Reduza aeração." },
 };
 
 function getAlertas(m: Medicao, activeParams: ParamKey[], baseline?: Baseline) {
@@ -159,7 +205,7 @@ function Grafico({ medicoes, aquarioId, paramKey, baseline }: { medicoes: Medica
 }
 
 function emptyMedicao(aquarioId: string): Omit<Medicao, "id"> {
-  return { aquarioId, data: new Date().toISOString().slice(0, 10), tpa: false, algae: false, temperatura: "", ph: "", amonia: "", nitrito: "", nitrato: "", dureza: "", obs: "" };
+  return { aquarioId, data: new Date().toISOString().slice(0, 10), tpa: false, algae: false, temperatura: "", ph: "", amonia: "", nitrito: "", nitrato: "", oxigenio: "", fosfato: "", kh: "", dureza: "", co2: "", tds: "", ferro: "", salinidade: "", calcio: "", magnesio: "", orp: "", obs: "" };
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -314,12 +360,23 @@ export default function DiarioPage() {
       aquarioId: aquarioAtivo,
       data: dataForm,
       tpa: false,
+      algae: false,
       temperatura: base?.temperatura ?? "",
       ph: base?.ph ?? "",
       amonia: base?.amonia ?? "",
       nitrito: base?.nitrito ?? "",
       nitrato: base?.nitrato ?? "",
+      oxigenio: base?.oxigenio ?? "",
+      fosfato: base?.fosfato ?? "",
+      kh: base?.kh ?? "",
       dureza: base?.dureza ?? "",
+      co2: base?.co2 ?? "",
+      tds: base?.tds ?? "",
+      ferro: base?.ferro ?? "",
+      salinidade: base?.salinidade ?? "",
+      calcio: base?.calcio ?? "",
+      magnesio: base?.magnesio ?? "",
+      orp: base?.orp ?? "",
       obs: "",
     });
     setEditandoMedicaoId(null);
@@ -558,21 +615,30 @@ export default function DiarioPage() {
                 </div>
 
                 {abaConfig === "params" && (
-                  <div className="p-5">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                      {TODOS_PARAMS.map(p => {
-                        const ativo = aq.params.includes(p.key);
-                        return (
-                          <button key={p.key} onClick={() => toggleParam(p.key)}
-                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${ativo ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" : "border-white/8 text-slate-500 hover:text-slate-300 hover:border-white/15"}`}>
-                            <p.icon className={`w-4 h-4 ${ativo ? p.color : "text-slate-600"}`} />
-                            {p.label}
-                            {ativo && <CheckCircle className="w-3.5 h-3.5 ml-auto text-cyan-500" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-slate-600 text-xs">Desative parâmetros que você não mede. O formulário se ajusta automaticamente.</p>
+                  <div className="p-5 space-y-4">
+                    {(["universal", "doce", "salgado"] as const).map(cat => {
+                      const catParams = TODOS_PARAMS.filter(p => p.category === cat);
+                      const catLabel = cat === "universal" ? "🌐 Universal" : cat === "doce" ? "💧 Água Doce" : "🌊 Água Salgada / Recife";
+                      return (
+                        <div key={cat}>
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{catLabel}</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {catParams.map(p => {
+                              const ativo = aq.params.includes(p.key);
+                              return (
+                                <button key={p.key} onClick={() => toggleParam(p.key)}
+                                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${ativo ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" : "border-white/8 text-slate-500 hover:text-slate-300 hover:border-white/15"}`}>
+                                  <p.icon className={`w-4 h-4 ${ativo ? p.color : "text-slate-600"}`} />
+                                  {p.label}
+                                  {ativo && <CheckCircle className="w-3.5 h-3.5 ml-auto text-cyan-500" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <p className="text-slate-600 text-xs">Ative apenas os parâmetros que você mede. O formulário se ajusta automaticamente.</p>
                   </div>
                 )}
 
