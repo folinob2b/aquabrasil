@@ -8017,6 +8017,37 @@ export const peixes: Peixe[] = [
     corCard: "from-amber-900/20 to-zinc-950/80",
     tags: ["nano", "cascudo", "loricariidae", "algas", "vidro", "brasileiro", "plantado", "endêmico"],
   },
+
+  // ── GOBIIDAE ─────────────────────────────────────────────────────────────
+  {
+    id: "peixe-abelhinha",
+    nome: "Peixe-abelhinha",
+    nomeIngles: "Bumblebee Goby",
+    nomeCientifico: "Brachygobius xanthozonus",
+    familia: "Gobiidae",
+    tipo: "agua-doce",
+    tamanho: "nano",
+    tamanhoAdulto: 4,
+    dificuldade: "moderado",
+    temperamento: "semi-agressivo",
+    zonaNatacao: "fundo",
+    temperatura: { min: 24, max: 28 },
+    ph: { min: 7.0, max: 8.5 },
+    dureza: { min: 9, max: 19 },
+    aquarioMinimo: 40,
+    origem: "Borneo, Sumatra — Indonésia e Malásia",
+    alimentacao: "Carnívoro estrito: aceita apenas alimentos vivos ou congelados — larva de mosquito (bloodworm), artêmia, daphnia e tubifex. Recusa ração seca.",
+    descricao: "Pequeno góbio com listras amarelas e pretas que imitam o padrão de uma abelha, daí o nome popular. Pode ser mantido em água doce ou levemente salobra. Macho costuma ser mais colorido e esguio; fêmea é mais rechonchuda na época de reprodução.",
+    comportamento: "Vive no fundo, explora rochas, raízes e esconderijos constantemente. Territorial com indivíduos da mesma espécie — machos disputam espaço, mas raramente ferem. Pacífico com peixes de outros níveis que não concorram por território.",
+    compativeisCom: ["neon-tetra", "tetra-cardeal", "rasbora-arlequim", "peixe-zebra", "tetra-pinguim", "tetra-fogo"],
+    incompativeisCom: ["betta", "acara-bandeira", "oscar", "loach-palhaco", "corydoras-bronze", "corydoras-panda"],
+    emoji: "🐝",
+    foto: W("Brachygobius xanthozonus.jpg"),
+    fotos: [W("Brachygobius doriae.jpg")],
+    variacoes: ["Brachygobius xanthozonus", "Brachygobius doriae", "Brachygobius nunus"],
+    corCard: "from-yellow-900/40 to-zinc-950/80",
+    tags: ["nano", "fundo", "gobiidae", "asiático", "salobro", "carnívoro", "esconderijo", "abelhinha"],
+  },
 ];
 
 // ── LABELS ────────────────────────────────────────────────────────────────
