@@ -4,7 +4,7 @@ import {
   Plus, Trash2, CalendarDays, Thermometer, FlaskConical,
   Droplets, Wind, AlertTriangle, ChevronDown, TrendingUp,
   CheckCircle, XCircle, Lightbulb, Settings, Pencil, X,
-  ClipboardList, Beaker, Camera,
+  ClipboardList, Beaker, Camera, Leaf,
 } from "lucide-react";
 import BubbleBackground from "@/components/BubbleBackground";
 
@@ -26,6 +26,7 @@ interface Medicao {
   aquarioId: string;
   data: string;
   tpa: boolean;
+  algae: boolean;
   temperatura: string;
   ph: string;
   amonia: string;
@@ -158,7 +159,7 @@ function Grafico({ medicoes, aquarioId, paramKey, baseline }: { medicoes: Medica
 }
 
 function emptyMedicao(aquarioId: string): Omit<Medicao, "id"> {
-  return { aquarioId, data: new Date().toISOString().slice(0, 10), tpa: false, temperatura: "", ph: "", amonia: "", nitrito: "", nitrato: "", dureza: "", obs: "" };
+  return { aquarioId, data: new Date().toISOString().slice(0, 10), tpa: false, algae: false, temperatura: "", ph: "", amonia: "", nitrito: "", nitrato: "", dureza: "", obs: "" };
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -640,6 +641,14 @@ export default function DiarioPage() {
                     <span className="text-sm font-medium text-slate-300">TPA realizada</span>
                     <span className="text-xs text-slate-600">(Troca Parcial de Água)</span>
                   </label>
+                  <label className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border cursor-pointer transition-all select-none min-w-max ${form.algae ? "border-green-500/40 bg-green-500/10 hover:bg-green-500/15" : "border-white/10 bg-white/3 hover:border-green-500/25 hover:bg-green-500/5"}`}>
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${form.algae ? "bg-green-500 border-green-500" : "border-slate-600 bg-transparent"}`}>
+                      {form.algae && <Leaf className="w-3 h-3 text-white" />}
+                    </div>
+                    <input type="checkbox" checked={form.algae} onChange={e => upForm("algae", e.target.checked)} className="sr-only" />
+                    <Leaf className={`w-4 h-4 transition-colors ${form.algae ? "text-green-400" : "text-slate-600"}`} />
+                    <span className={`text-sm font-medium transition-colors ${form.algae ? "text-green-300" : "text-slate-300"}`}>Alerta de alga</span>
+                  </label>
                 </div>
 
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
@@ -784,6 +793,7 @@ export default function DiarioPage() {
                             );
                           })}
                           {m.tpa && <span className="text-xs text-blue-400">💧TPA</span>}
+                          {m.algae && <span className="flex items-center gap-1 text-xs text-green-400"><Leaf className="w-3 h-3" />Alga</span>}
                           {m.obs && <span className="text-slate-600 text-xs italic truncate max-w-[180px]">{m.obs}</span>}
                         </div>
                         {avisos.length > 0 && (
