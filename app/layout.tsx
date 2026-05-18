@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "AquaBrasil — Plataforma para Aquaristas",
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased">
-        <Navbar />
-        <div className="pt-14 md:pt-0 md:pl-56">{children}</div>
-        <Footer />
+        <AuthProvider>
+          <Navbar />
+          <div className="pt-14 md:pt-0 md:pl-56">{children}</div>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

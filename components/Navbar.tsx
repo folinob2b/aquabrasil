@@ -3,8 +3,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  Waves, Menu, X, BookOpen, Shuffle, CalendarDays, MessageSquare, Home, GraduationCap, Leaf,
+  Waves, Menu, X, BookOpen, Shuffle, CalendarDays, MessageSquare, Home, GraduationCap, Leaf, LogOut, User,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import AuthModal from "./AuthModal";
 
 const links = [
   { href: "/",                label: "Início",               icon: Home },
@@ -16,9 +18,15 @@ const links = [
   { href: "/forum",           label: "Fórum",                icon: MessageSquare },
 ];
 
+type ModalMode = "login" | "cadastro" | null;
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [modal, setModal] = useState<ModalMode>(null);
   const pathname = usePathname();
+  const { user, signOut, loading } = useAuth();
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuário";
 
   return (
     <>
@@ -94,14 +102,47 @@ export default function Navbar() {
 
         {/* Auth */}
         <div className="px-3 pb-5 pt-4 border-t border-cyan-900/15 flex flex-col gap-2">
-          <button className="w-full py-2 rounded-xl text-sm font-medium text-slate-300 border border-slate-700/60 hover:border-slate-500 hover:text-white transition-all">
-            Entrar
-          </button>
-          <button className="w-full py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 transition-all glow-cyan">
-            Cadastrar
-          </button>
+          {loading ? (
+            <div className="h-9 rounded-xl bg-white/5 animate-pulse" />
+          ) : user ? (
+            <>
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/5">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center flex-shrink-0">
+                  <User className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="text-sm text-slate-200 font-medium truncate">{displayName}</span>
+              </div>
+              <button
+                onClick={signOut}
+                className="w-full py-2 rounded-xl text-sm font-medium text-slate-400 border border-slate-700/60 hover:border-slate-500 hover:text-white transition-all flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sair
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => setModal("login")}
+                className="w-full py-2 rounded-xl text-sm font-medium text-slate-300 border border-slate-700/60 hover:border-slate-500 hover:text-white transition-all"
+              >
+                Entrar
+              </button>
+              <button
+                onClick={() => setModal("cadastro")}
+                className="w-full py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 transition-all glow-cyan"
+              >
+                Cadastrar
+              </button>
+            </>
+          )}
         </div>
       </aside>
+
+      {/* ── Modal ──────────────────────────────────────────── */}
+      {modal && (
+        <AuthModal initialMode={modal} onClose={() => setModal(null)} />
+      )}
     </>
   );
 }
