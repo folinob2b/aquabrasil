@@ -12,7 +12,7 @@ const links = [
   { href: "/",                label: "Início",               icon: Home },
   { href: "/catalogo",        label: "Catálogo",             icon: BookOpen },
   { href: "/compatibilidade", label: "Compatibilidade",      icon: Shuffle },
-  { href: "/calendario",      label: "Diário de Parâmetros", icon: CalendarDays },
+  { href: "/calendario",      label: "Diário do Aquário",    icon: CalendarDays },
   { href: "/aquascape",       label: "Aquascape",            icon: Leaf },
   { href: "/educacao",        label: "Educação",             icon: GraduationCap },
   { href: "/forum",           label: "Fórum",                icon: MessageSquare },

@@ -7,6 +7,7 @@ import {
   ClipboardList, Beaker, Camera, Leaf, Waves, Gauge, Zap, Activity,
 } from "lucide-react";
 import BubbleBackground from "@/components/BubbleBackground";
+import { peixes as catalogoPeixes } from "@/data/peixes";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type ParamKey =
@@ -16,12 +17,19 @@ type ParamKey =
 
 type Baseline = Partial<Record<ParamKey, { min: number; max: number }>>;
 
+interface AquarioPeixe {
+  id: string;
+  nome: string;
+  quantidade: number;
+}
+
 interface Aquario {
   id: string;
   nome: string;
   tipo: "doce" | "salgado";
   params: ParamKey[];
   baseline: Baseline;
+  peixes: AquarioPeixe[];
   foto?: string;
 }
 
@@ -230,6 +238,8 @@ export default function DiarioPage() {
   const [renamingId, setRenamingId]     = useState<string | null>(null);
   const [renameVal, setRenameVal]       = useState("");
   const [renameTipo, setRenameTipo]     = useState<"doce" | "salgado">("doce");
+  const [adicionandoPeixe, setAdicionandoPeixe] = useState(false);
+  const [buscaPeixe, setBuscaPeixe]     = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -266,7 +276,7 @@ export default function DiarioPage() {
     const defaultParams: ParamKey[] = novoAqTipo === "salgado"
       ? ["temperatura", "ph", "amonia", "nitrito", "nitrato", "salinidade"]
       : [...PARAMS_PADRAO];
-    const novo: Aquario = { id: crypto.randomUUID(), nome, tipo: novoAqTipo, params: defaultParams, baseline: {} };
+    const novo: Aquario = { id: crypto.randomUUID(), nome, tipo: novoAqTipo, params: defaultParams, baseline: {}, peixes: [] };
     const lista = [...aquarios, novo];
     saveAquarios(lista);
     setAquarioAtivo(novo.id);
@@ -336,6 +346,31 @@ export default function DiarioPage() {
     saveMedicoes(medicoes.filter(m => m.aquarioId !== id));
     const restantes = aquarios.filter(a => a.id !== id);
     setAquarioAtivo(restantes.length > 0 ? restantes[0].id : "");
+  }
+
+  function adicionarPeixeAoAquario(peixeId: string, peixeNome: string) {
+    if (!aq) return;
+    const jaExiste = (aq.peixes ?? []).find(p => p.id === peixeId);
+    if (jaExiste) {
+      saveAquarios(aquarios.map(a => a.id === aq.id ? { ...a, peixes: (a.peixes ?? []).map(p => p.id === peixeId ? { ...p, quantidade: p.quantidade + 1 } : p) } : a));
+    } else {
+      saveAquarios(aquarios.map(a => a.id === aq.id ? { ...a, peixes: [...(a.peixes ?? []), { id: peixeId, nome: peixeNome, quantidade: 1 }] } : a));
+    }
+    setBuscaPeixe("");
+    setAdicionandoPeixe(false);
+  }
+
+  function removerPeixeDoAquario(peixeId: string) {
+    if (!aq) return;
+    saveAquarios(aquarios.map(a => a.id === aq.id ? { ...a, peixes: (a.peixes ?? []).filter(p => p.id !== peixeId) } : a));
+  }
+
+  function alterarQuantidadePeixe(peixeId: string, delta: number) {
+    if (!aq) return;
+    saveAquarios(aquarios.map(a => a.id === aq.id ? {
+      ...a,
+      peixes: (a.peixes ?? []).map(p => p.id === peixeId ? { ...p, quantidade: Math.max(1, p.quantidade + delta) } : p),
+    } : a));
   }
 
   function renomearAquario(id: string) {
@@ -435,9 +470,9 @@ export default function DiarioPage() {
         <BubbleBackground count={10} />
         <div className="relative z-10">
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-3">
-            Diário de <span className="text-gradient">Parâmetros</span>
+            Diário do <span className="text-gradient">Aquário</span>
           </h1>
-          <p className="text-slate-400">Registre e acompanhe a qualidade da água dos seus aquários.</p>
+          <p className="text-slate-400">Registre parâmetros, acompanhe a qualidade da água e gerencie seus peixes.</p>
         </div>
       </section>
 
@@ -621,6 +656,87 @@ export default function DiarioPage() {
                   <Pencil className="w-3 h-3" /> editar
                 </button>
                 </div>
+              </div>
+
+              {/* Seção de peixes */}
+              <div className="border-t border-white/5 px-5 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                    Peixes do aquário
+                    {(aq.peixes ?? []).length > 0 && (
+                      <span className="ml-2 text-slate-600 font-normal normal-case">
+                        {(aq.peixes ?? []).reduce((s, p) => s + p.quantidade, 0)} peixe{(aq.peixes ?? []).reduce((s, p) => s + p.quantidade, 0) !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </p>
+                  <button
+                    onClick={() => { setAdicionandoPeixe(!adicionandoPeixe); setBuscaPeixe(""); }}
+                    className="flex items-center gap-1 text-xs text-cyan-500 hover:text-cyan-300 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" /> Adicionar
+                  </button>
+                </div>
+
+                {/* Busca de peixes */}
+                {adicionandoPeixe && (
+                  <div className="mb-3">
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder={`Buscar peixe de água ${aq.tipo === "salgado" ? "salgada" : "doce"}...`}
+                      value={buscaPeixe}
+                      onChange={e => setBuscaPeixe(e.target.value)}
+                      className="input-ocean text-sm w-full mb-2"
+                    />
+                    {buscaPeixe.trim().length >= 2 && (() => {
+                      const tipoFiltro = aq.tipo === "salgado" ? "agua-salgada" : "agua-doce";
+                      const resultados = catalogoPeixes
+                        .filter(p => p.tipo === tipoFiltro && p.nome.toLowerCase().includes(buscaPeixe.toLowerCase()))
+                        .slice(0, 8);
+                      return resultados.length > 0 ? (
+                        <div className="rounded-xl border border-white/8 overflow-hidden">
+                          {resultados.map((p, i) => (
+                            <button
+                              key={p.id}
+                              onClick={() => adicionarPeixeAoAquario(p.id, p.nome)}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5 transition-colors ${i > 0 ? "border-t border-white/5" : ""}`}
+                            >
+                              <span className="text-lg">{p.emoji}</span>
+                              <div>
+                                <p className="text-sm text-slate-200 font-medium">{p.nome}</p>
+                                <p className="text-xs text-slate-600 italic">{p.nomeCientifico}</p>
+                              </div>
+                              <Plus className="w-3.5 h-3.5 text-cyan-500 ml-auto flex-shrink-0" />
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-600 px-1">Nenhum peixe encontrado.</p>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Lista de peixes */}
+                {(aq.peixes ?? []).length === 0 && !adicionandoPeixe ? (
+                  <p className="text-slate-700 text-xs">Nenhum peixe adicionado ainda.</p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {(aq.peixes ?? []).map(p => (
+                      <div key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/3 transition-colors group">
+                        <span className="text-slate-300 text-sm flex-1 truncate">{p.nome}</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button onClick={() => alterarQuantidadePeixe(p.id, -1)} className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">−</button>
+                          <span className="text-xs text-slate-300 font-medium w-5 text-center">{p.quantidade}</span>
+                          <button onClick={() => alterarQuantidadePeixe(p.id, +1)} className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all text-xs">+</button>
+                        </div>
+                        <button onClick={() => removerPeixeDoAquario(p.id)} className="opacity-0 group-hover:opacity-100 p-1 text-slate-700 hover:text-rose-400 transition-all flex-shrink-0">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
