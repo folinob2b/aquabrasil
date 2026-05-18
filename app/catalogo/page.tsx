@@ -315,8 +315,8 @@ export default function CatalogoPage() {
   const totalDoce = peixesDoce.length;
 
   const categorias: { id: Categoria; label: string; emoji: string; count: number; disponivel: boolean }[] = [
-    { id: "agua-doce",    label: "Água Doce",    emoji: "💧", count: totalDoce, disponivel: true },
-    { id: "agua-salgada", label: "Água Salgada", emoji: "🌊", count: 0,         disponivel: false },
+    { id: "agua-doce",    label: "Peixes Água Doce",    emoji: "💧", count: totalDoce, disponivel: true },
+    { id: "agua-salgada", label: "Peixes Água Salgada", emoji: "🌊", count: 0,         disponivel: false },
     { id: "plantas",      label: "Plantas",      emoji: "🌿", count: plantas.length, disponivel: true },
     { id: "corais",       label: "Corais",       emoji: "🪸", count: 0,         disponivel: false },
     { id: "invertebrados",label: "Invertebrados",emoji: "🦐", count: 0,         disponivel: false },
